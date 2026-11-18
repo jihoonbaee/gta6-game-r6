@@ -1,0 +1,134 @@
+/* Neon Harbor — locally rendered instruments over a warm harbor city. */
+:root {
+  color-scheme: dark;
+  font-family: "Arial", "Helvetica", sans-serif;
+  color: #f7f1df;
+  background: #102b35;
+  --ink: #102d37;
+  --glass: rgba(13, 36, 45, .89);
+  --line: rgba(207, 229, 222, .23);
+  --gold: #ffcf78;
+  --mint: #bde9c8;
+}
+* { box-sizing: border-box; }
+html, body, #game-root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { user-select: none; }
+button { font: inherit; }
+[hidden] { display: none !important; }
+#game-root { position: relative; isolation: isolate; }
+#game-canvas { display: block; width: 100%; height: 100%; outline: 0; }
+#hud-layer, #screen-layer { position: absolute; inset: 0; }
+#hud-layer { z-index: 2; pointer-events: none; }
+#screen-layer { z-index: 4; }
+.live-hud { position: absolute; inset: 0; text-shadow: 0 1px 3px #09232a; }
+.city-brand { position: absolute; top: 30px; left: 32px; display: grid; grid-template-columns: 5px auto; gap: 4px 12px; }
+.brand-rule { grid-row: span 2; background: var(--gold); }
+.brand-name { font-size: 24px; font-weight: 900; letter-spacing: .11em; }
+.brand-caption { font-size: 10px; font-weight: 700; letter-spacing: .25em; color: #fff0d1; }
+.status-cluster { position: absolute; top: 25px; right: 30px; width: 264px; text-align: right; }
+.time-row { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+.game-date { font-size: 10px; letter-spacing: .14em; font-weight: 700; }
+.game-clock { font-variant-numeric: tabular-nums; font-size: 25px; letter-spacing: .03em; }
+.wanted-stars { display: flex; justify-content: flex-end; gap: 7px; margin-top: 5px; }
+.wanted-star { font-size: 29px; line-height: 1.15; color: rgba(15, 43, 52, .6); -webkit-text-stroke: 1px rgba(255, 243, 216, .65); }
+.wanted-star.active { color: var(--gold); -webkit-text-stroke: 1px #ffe8b4; text-shadow: 0 0 15px #ffbc5960, 0 2px 3px #12333b; }
+.pursuit-status { display: block; margin-top: 6px; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.pursuit-status.is-wanted { color: #ffdc9e; }
+.cash-value { display: block; margin-top: 12px; font-size: 31px; letter-spacing: .015em; font-variant-numeric: tabular-nums; }
+.shift-value { display: block; color: var(--mint); font-size: 10px; font-weight: 800; letter-spacing: .14em; margin-top: 4px; }
+.vitals { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+.instrument { display: flex; align-items: baseline; gap: 7px; }
+.eyebrow { font-size: 9px; font-weight: 800; letter-spacing: .16em; }
+.instrument-value { font-size: 15px; font-variant-numeric: tabular-nums; }
+.health-track { height: 5px; width: 60px; background: rgba(11, 31, 39, .6); border-radius: 3px; overflow: hidden; }
+.health-fill { height: 100%; background: var(--mint); }
+.health-fill.critical { background: #ff816b; }
+.ammo-instrument { padding-left: 11px; border-left: 1px solid var(--line); }
+.ammo-instrument .instrument-value { font-size: 13px; }
+.contract-card { position: absolute; top: 104px; left: 32px; width: 328px; background: linear-gradient(110deg, rgba(14, 39, 48, .95), rgba(14, 39, 48, .82)); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 17px 19px 14px; box-shadow: 0 5px 25px #102c3520; }
+.contract-heading { display: flex; align-items: center; gap: 13px; }
+.contract-number { font-size: 29px; color: var(--gold); line-height: 1; font-weight: 400; border-right: 1px solid var(--line); padding-right: 13px; }
+.contract-tag { color: #bccfce; font-size: 8px; }
+.contract-tag.is-new { color: var(--gold); }
+.contract-title { font-size: 17px; margin: 4px 0 0; letter-spacing: .045em; font-weight: 800; }
+.contract-objective { margin: 16px 0 14px; line-height: 1.5; font-size: 13px; color: #f3ecd9; }
+.contract-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); padding-top: 11px; font-size: 8px; letter-spacing: .07em; }
+.objective-distance { color: #cfdfd9; }
+.contract-reward { color: var(--gold); white-space: nowrap; }
+.map-panel { position: absolute; left: 32px; bottom: 58px; width: 272px; background: var(--glass); border: 1px solid rgba(213, 231, 218, .5); box-shadow: 0 7px 25px #15363c38; }
+.map-heading { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.map-north { font-size: 10px; color: var(--gold); white-space: nowrap; font-weight: 800; }
+.map-location { font-size: 10px; letter-spacing: .025em; }
+.minimap { display: block; width: 100%; height: 190px; }
+.map-legend { display: flex; justify-content: space-between; padding: 9px 11px; border-top: 1px solid var(--line); font-size: 8px; font-weight: 700; letter-spacing: .08em; }
+.map-legend span::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: #f4ffed; }
+.map-legend .legend-objective::before { background: var(--gold); border-radius: 0; transform: rotate(45deg); }
+.map-legend .legend-police::before { background: #65c5ff; }
+.vehicle-panel { position: absolute; bottom: 69px; right: 32px; width: 235px; background: linear-gradient(110deg, rgba(14, 39, 48, .83), rgba(14, 39, 48, .95)); border: 1px solid var(--line); border-bottom: 3px solid var(--gold); padding: 15px 20px 16px; }
+.vehicle-name { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #f3e6c6; }
+.speed-row { display: flex; align-items: baseline; justify-content: space-between; margin: 1px 0 8px; }
+.gear { font-size: 25px; color: var(--gold); border-right: 1px solid var(--line); padding-right: 14px; }
+.speed-value { font-size: 64px; line-height: 1.15; font-weight: 300; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.speed-unit { font-size: 9px; font-weight: 700; color: #bed4d0; }
+.speed-track { height: 3px; background: rgba(231, 228, 204, .2); }
+.speed-fill { height: 100%; background: var(--gold); }
+.control-hints { position: absolute; left: 32px; right: 32px; bottom: 21px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 9px; font-weight: 800; letter-spacing: .075em; }
+.travel-hints, .combat-hints { background: rgba(13, 35, 43, .72); padding: 7px 10px; border-radius: 2px; }
+.combat-hints { color: #f1e4c7; }
+.crosshair { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border: 1px solid #18363e; background: #fff5d7; border-radius: 50%; box-shadow: 0 0 0 2px #ffffff45; transform: translate(-50%, -50%); }
+.mission-banner { position: absolute; top: 18%; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 6px; min-width: 330px; padding: 18px 35px; background: rgba(16, 43, 49, .94); border-top: 2px solid var(--gold); border-bottom: 1px solid var(--line); text-align: center; }
+.mission-banner .eyebrow { color: var(--gold); }
+.banner-title { font-size: 24px; letter-spacing: .07em; }
+.banner-reward { font-size: 14px; color: var(--mint); letter-spacing: .09em; }
+.toast { position: absolute; bottom: 89px; left: 50%; transform: translateX(-50%); max-width: 390px; padding: 12px 20px; text-align: center; background: var(--glass); border: 1px solid var(--line); color: var(--gold); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.damage-flash { position: absolute; inset: 0; box-shadow: inset 0 0 95px 25px #ed493a9e; background: #ff4f3014; }
+.menu-shell { display: flex; align-items: center; min-height: 100%; width: 100%; padding: 44px 7vw; background: linear-gradient(90deg, rgba(9, 30, 39, .97), rgba(10, 35, 44, .88) 42%, rgba(12, 36, 43, .15)); overflow: auto; }
+.menu-panel { max-width: 480px; padding: 20px 0; }
+.menu-kicker { color: var(--gold); font-size: 11px; letter-spacing: .27em; font-weight: 800; margin: 0 0 24px; }
+.game-title { font-size: clamp(55px, 7.8vw, 105px); white-space: pre-line; font-weight: 900; line-height: .86; letter-spacing: -.055em; margin: 0 0 18px -5px; }
+.menu-subtitle { letter-spacing: .42em; font-size: 12px; color: var(--gold); font-weight: 800; margin: 23px 0 22px; }
+.menu-copy { font-size: 14px; line-height: 1.7; max-width: 390px; color: #cfdfdc; margin: 0 0 22px; }
+.menu-button { display: block; cursor: pointer; width: 100%; border: 1px solid #afc6bc55; padding: 14px 20px; margin-top: 10px; background: rgba(16, 44, 53, .83); color: #fff3d8; font-size: 11px; font-weight: 800; text-align: left; letter-spacing: .15em; }
+.menu-button:hover, .menu-button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; background: #254d57; }
+.menu-button.primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.menu-button.primary:hover, .menu-button.primary:focus-visible { background: #ffe0a0; }
+.menu-controls { white-space: pre-line; font-size: 10px; color: #c1d1ca; line-height: 1.9; margin: 22px 0 10px; }
+.profile-note { color: var(--mint); font-size: 9px; font-weight: 800; letter-spacing: .07em; margin: 0 0 14px; }
+.menu-footnote { max-width: 350px; font-size: 10px; line-height: 1.6; color: #96b1b1; }
+.menu-title { font-size: clamp(34px, 4.5vw, 60px); font-weight: 900; letter-spacing: -.035em; line-height: 1; margin: 0 0 22px; white-space: pre-line; }
+.menu-pause, .menu-death, .menu-victory { justify-content: center; background: rgba(7, 27, 35, .78); text-align: center; }
+.menu-pause .menu-panel, .menu-death .menu-panel, .menu-victory .menu-panel { width: 450px; }
+.menu-pause .menu-copy, .menu-death .menu-copy, .menu-victory .menu-copy { margin-left: auto; margin-right: auto; }
+.menu-death .menu-kicker { color: #ffae94; }
+.menu-death .menu-title { color: #ffd5be; }
+.menu-victory .menu-title { color: var(--gold); }
+.victory-total { display: block; color: var(--mint); font-size: 25px; margin: 20px 0 28px; letter-spacing: .04em; }
+@media (max-width: 1000px) {
+  .city-brand { left: 20px; top: 21px; }
+  .brand-name { font-size: 19px; }
+  .contract-card { left: 20px; top: 87px; width: 290px; padding: 13px 15px; }
+  .contract-title { font-size: 15px; }
+  .status-cluster { right: 20px; top: 18px; }
+  .map-panel { left: 20px; width: 230px; }
+  .minimap { height: 161px; }
+  .vehicle-panel { right: 20px; width: 218px; }
+  .control-hints { left: 20px; right: 20px; font-size: 8px; }
+}
+@media (max-height: 600px) {
+  .city-brand { top: 16px; }
+  .contract-card { top: 77px; }
+  .map-panel { width: 213px; bottom: 45px; }
+  .minimap { height: 125px; }
+  .map-heading { padding: 7px 10px; }
+  .map-location { font-size: 9px; }
+  .map-legend { padding: 7px 9px; font-size: 7px; }
+  .control-hints { bottom: 12px; }
+  .vehicle-panel { bottom: 55px; }
+  .menu-shell { padding: 20px 7vw; }
+  .menu-panel { padding: 0; }
+  .game-title { font-size: 64px; }
+  .menu-kicker { margin-bottom: 16px; }
+  .menu-subtitle { margin: 15px 0; }
+  .menu-copy { font-size: 12px; margin-bottom: 12px; }
+  .menu-controls { margin-top: 15px; }
+}
